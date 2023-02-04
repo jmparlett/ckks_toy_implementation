@@ -1,0 +1,203 @@
+\documentclass{beamer}
+\usetheme{default}
+\begin{document}
+	\begin{frame}
+		CKKS
+	\end{frame}
+	\begin{frame}{Naive Implementation}
+		Given matrix $A \in \mathbb{Z}^{n \times n}_q$ $s, e \in \mathbb{Z}^n_q$, we publish n public keys as a tuple
+		\begin{equation*}
+			p=(-A \cdot s + e, A)
+		\end{equation*}
+		s is hidden because of e.
+	\end{frame}
+	\begin{frame}{Naive Implementation-Keys}
+		Given matrix $A \in \mathbb{Z}^{n \times n}_q$ $s, e \in \mathbb{Z}^n_q$, we publish n public keys as a tuple
+		\begin{equation*}
+			p=(-A \cdot s + e, A)
+		\end{equation*}
+		s and e are private.
+	\end{frame}
+	\begin{frame}{Encryption}
+		Given message $\mu \in \mathbb{Z}^n_q$, we can encrypt by adding the public key as
+		\begin{equation*}
+			(\mu, 0) + p=(\mu -A \cdot s + e, A) = (c_0, c_1)
+		\end{equation*}
+		We assume that $e$ is negligible compared to $\mu$
+	\end{frame}
+	\begin{frame}{Decyption}
+		\begin{equation*}
+			c_0+c_1\cdot s = \mu -A \cdot s + e + A \cdot s = \mu + e
+		\end{equation*}
+		
+	\end{frame}
+	\begin{frame}{Problem}
+		$c_1 \cdot S$ is $O(n^2)$ which is too inefficient.
+	\end{frame}
+	\begin{frame}{Solution: Use polynomial rings}
+		We get $a, s, e, \mu \in \dfrac{\mathbb{Z}_{q}[X]}{X^N-1}$ and e a small random polynomial. Then,
+		
+		1. We publish n public keys as a tuple
+		\begin{equation*}
+			p=(-a \cdot s + e, a)
+		\end{equation*}
+		
+		Since a is size n and not $n^2$, the complexity is way lower.
+		
+		2. 
+		\begin{equation*}
+			(\mu, 0) + p=(\mu -a \cdot s + e, a) = (c_0, c_1)
+		\end{equation*}
+		
+		3.
+		\begin{equation*}
+			c_0+c_1\cdot s = \mu -a \cdot s + e + a \cdot s = \mu + e
+		\end{equation*}
+		Here, $a \cdot s$ can be done with discrete fourier transform in $O(n\log n)$ time.
+	\end{frame}
+	\begin{frame}{Properties of CKKS/Homomorphic Encryption}
+		We can do addition and multiplication on encrypted data then recover that
+	\end{frame}
+	\begin{frame}{Addition}
+		Let us add the cypher texts
+		\begin{equation*}
+			c_{add}=c+c'=(c_0+c_0', c_1+c_1')
+		\end{equation*}
+		Let's try decryption
+		\begin{equation*}
+			\mu+\mu' = c_0+c_0'+(c_1+c_1')s=\mu+\mu'+2e \approx \mu+\mu'
+		\end{equation*}
+		So just adding normally does work assuming that 2e is negligible.
+	\end{frame}
+	\begin{frame}{Multiplication}
+		Now this is a bit more complicated. We want to do some operation on $c$ and $c'$ so that when we decrypt, we get
+		\begin{equation*}
+			\mu\cdot \mu' = (c_0+c_1\cdot s)(c_0'+c_1'\cdot s)=c_0c_0'+(c_0c_1'+c_0'c_1)s+c_1c_1's^2
+		\end{equation*}
+		So if we define the multiplication operation to produce
+		
+		\begin{equation*}
+			(c_0c_0', c_0c_1'+c_0'c_1, c_1c_1')
+		\end{equation*}
+		where decryption multiplies this by $(1, s, s^2)$, we have our solution.
+		To stop this polynomial from keep growing forever, we introduce Relinearization.
+	\end{frame}
+	\begin{frame}{Relinearization}
+		We introduce a new polynomial $P \in \dfrac{\mathbb{Z}_{q}[X]}{X^N-1}$ such that when P is decrypted, we get $c_1c_1's^2$.
+		
+		To be more clear, we want to get a pair $(p_1, p_2)$ that if decrypted makes $c_1c_1's^2$.
+		
+		Here, we can see, given $a_0$ a random polynomial, we can get an evaluation key pair below
+		\begin{equation*}
+			evaulation := (-a_0\cdot s+e+s^2, a_0)
+		\end{equation*}
+		as
+		\begin{equation*}
+			(-a_0\cdot s+e+s^2)+a_0\cdot s = e+s^2 \approx s^2
+		\end{equation*}
+		Then for P, we can just do
+		\begin{equation*}
+			P := c_1c_1'evaluation
+		\end{equation*}
+	\end{frame}
+	\begin{frame}{Relinearization}
+		Now that we have P, which when decrypted becomes $c_1c_1's^2$, we can decrypt to obtain
+		\begin{equation*}
+			\mu\cdot \mu' = (c_0+c_1\cdot s)(c_0'+c_1'\cdot s)=c_0c_0'+(c_0c_1'+c_0'c_1)s+c_1c_1's^2
+		\end{equation*}
+		
+		To do this, since we are doing relinearization on $(c_0c_0', c_0c_1'+c_0'c_1, c_1c_1')$, we can simply get the pair
+		\begin{equation*}
+			(c_0c_0', c_0c_1'+c_0'c_1)+P
+		\end{equation*}
+		as the first pair handles $c_0c_0'+(c_0c_1'+c_0'c_1)s$ part and the P handles $c_1c_1's^2$
+	\end{frame}
+	\begin{frame}{Problem with P}
+		The problem is with our assumption. Even if for the evaluation key,
+		\begin{equation*}
+			(-a_0\cdot s+e+s^2)+a_0\cdot s = e+s^2 \approx s^2
+		\end{equation*}
+		is true, when we multiply the above by $c_1c_1'$, 
+		\begin{equation*}
+			c_1c_1'e+c_1c_1's^2 
+		\end{equation*}
+		is not necessarily the same as $c_1c_1's^2$ because the error can become too large to ignore. Especially hard since for $c_1$, we are sampling from $\dfrac{\mathbb{Z}_q[X]}{X^N-1}$.
+	\end{frame}
+	\begin{frame}{Trick solution}
+		The main solution to this problem is to change the valuation key such that, given $a_0 \in \dfrac{\mathbb{Z}_{pq}[X]}{X^N-1}$
+		\begin{equation*}
+			evaulation := (-a_0\cdot s+e+p\cdot s^2, a_0) \mod pq
+		\end{equation*}
+		
+		If we decrypt this, we obtain $p\cdot s^2$. Now, for getting P, we do
+		\begin{equation*}
+			P:= p^{-1}c_1c_1'evaluation
+		\end{equation*}
+		So we thus make the error negligible when decoding by inverting by p.
+		Now we are done with multiplication!
+	\end{frame}
+	\begin{frame}{Problems}
+		When we do keep multiplying after a while, the error gets too big to ignore again.
+		
+		To solve this we need to do a technique called rescaling.
+		
+	\end{frame}
+	\begin{frame}{Rescaling}
+		To do this technique we need to 
+		
+		1. Know the amount of multiplications until the error becomes too much. If we make the amount of multiplications allowed too much, the encryption becomes less secure. The hardness of the encryption is based on $\dfrac{N}{q}$. More variables+higher coefficients=less secure. q will give us the amount of multiplications we can do as $c_1c_1'$ are both sampled from $a \in \dfrac{\mathbb{Z}_{q}[X]}{X^N-1}$
+		% TODO: \usepackage{graphicx} required
+		\begin{figure}
+			\centering
+			\includegraphics[width=0.7\linewidth]{C:/Users/isamu/Downloads/security_params}
+		\end{figure}
+	\end{frame}
+	\begin{frame}{Rescaling}
+		For our $a, \mu \in \dfrac{\mathbb{Z}_{q}[X]}{X^N-1}$, but not the error, we first multiply by $\bigtriangleup$ before encryption. So given $c=\bigtriangleup z$, when we multiply two cyphers
+		Why do we have $\bigtriangleup$?
+		\begin{equation*}
+			cc'=\bigtriangleup^2 zz'
+		\end{equation*}
+		We want to 
+		
+		1. Keep this scale constant
+		
+		2. Reduce the noise.
+	\end{frame}
+	\begin{frame}{Rescaling}		
+		After L multiplications, 
+		\begin{equation*}
+			q_{L} = \bigtriangleup^L q_0
+		\end{equation*}
+		Now in $q_0$, the $\bigtriangleup$ will dictate the amount of precision we want in the decimal part of the gas tank(why?). So given we want 10 bits for integers and 30 bit decimal, $\bigtriangleup = 2^{30}$ and $q_0=2^{10+30}=2^{40}$. Note q can be not prime.
+		
+		As we want to keep the scale cosntant, to rescale from level $q_l$ to level $q_{l-1}$ we can simply divide the cypher text as follows.
+		\begin{equation*}
+			\dfrac{q_{l-1}}{q_l}c \mod q_l = \bigtriangleup^{-1} c \mod q_l
+		\end{equation*}
+	\end{frame}
+	\begin{frame}{Rescaling}
+		The previous operation accomplishes 2 things1
+		1. Since we are dividing by $\bigtriangleup$, the result of the multiplication of cyphers $cc'$ will just be $\bigtriangleup zz'$.
+		2. Noise is reduced as we are dividing by $\bigtriangleup$ which it wasn't scaled by on each level.
+	\end{frame}
+	\begin{frame}{Chinese Remainder Theorem}
+		The problem is that these qs become too large very fast as if $\bigtriangleup$ is $2^{30}$ one operation is enough to make it infeasable to fit in a 64 bit register.
+		
+		To solve this we use the property of the chinese remainder theorem where given $p=\prod_{i=1}^{L}p_i$
+		\begin{equation*}
+			\mathbb{Z}/p\mathbb{Z}\to\mathbb{Z}/p_1\mathbb{Z}X\cdots\mathbb{Z}/p_L\mathbb{Z}
+		\end{equation*}
+		So the operation in the left space is the same as the right space. Now, we also choose $p_i \approx \bigtriangleup$
+	\end{frame}
+	\begin{frame}{Chinese Remainder Theorem}
+		So thus instead of $\bigtriangleup^L$ we do
+		\begin{equation*}
+			q_{L} = \prod_{i=1}^{L}p_i q_0
+		\end{equation*}
+		and do the computation with the Chinese Remainder Theorem. To rescale we can just do
+		\begin{equation*}
+			\dfrac{q_{l-1}}{q_l}c \mod q_l = p_l^{-1} c \mod q_l
+		\end{equation*}
+	\end{frame}
+\end{document}
