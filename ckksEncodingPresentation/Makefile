@@ -1,0 +1,3 @@
+ckksEncodingPresentation: ckksEncodingPresentation.tex
+	lualatex --shell-escape ckksEncodingPresentation.tex
+	rm ckksEncodingPresentation.log ckksEncodingPresentation.aux ckksEncodingPresentation.snm ckksEncodingPresentation.toc ckksEncodingPresentation.vrb ckksEncodingPresentation.nav

@@ -1,0 +1,221 @@
+
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fancyhdr}
+\usepackage{pgfplots}
+\usepackage{setspace}
+\usepackage{listings}
+\pgfplotsset{compat=1.17} 
+\usepackage{enumerate}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+% \geometry{a4paper} % or letter or a5paper or ... etc
+% \geometry{landscape} % rotated page geometry
+% \usepackage[margin=2cm]{geometry}
+\usepackage{minted}
+\usepackage[most]{tcolorbox}
+\newtcolorbox{tb}[1][]{%
+  sharp corners,
+  enhanced,
+  colback=white,
+  height=6cm,
+  attach title to upper,
+  #1
+}
+
+%These setting will make the code areas look Pretty
+\lstset{
+	escapechar=~,
+	numbers=left, 
+	%numberstyle=\tiny, 
+	stepnumber=1, 
+	firstnumber=1,
+	%numbersep=5pt,
+	language=C,
+	% stringstyle=\itfamily,
+	%basicstyle=\footnotesize, 
+	showstringspaces=false,
+	frame=single,
+  upquote=true
+}
+
+% created 2023-February-5 %
+% Theme choice:
+% \usetheme{AnnArbor}
+\usetheme{focus}
+% Title page details: 
+\title{ckks Encoding}
+\author{Jonathan Parlett}
+\date{\today}
+
+\begin{document}
+
+% Title page frame
+\begin{frame}
+    \titlepage
+\end{frame}
+
+
+\begin{frame}{What well cover}
+	\begin{itemize}[<+->]
+		\item Cyclotomic polynomials and their degrees
+		\item A simplified encoding scheme from polynomials with complex coefficients to
+		vectors with complex coefficients
+		\item The actual encoding scheme from polynomials with integer coefficients
+		to vectors of complex coefficients. 
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Cyclotomic polynomials}
+	\begin{itemize}[<+->]
+		\item The $n$-th Cyclotomic polynomial is defined as $\Phi_n(x) = \Pi_{1 \le k \le n | \gcd(k,n) = 1} (x - e^{2i\pi\frac{k}{n}})$
+		\item From the constraint that $gcd(k,n) = 1$ you may be able to infer that the degree of the $n$-th
+		cyclotomic polynomial is equal to $\rho(n)$ where $\rho$ is Eulers totient function.
+		\item This property will be important to consider when you we select a cyclotomic to use for our
+		encoding
+		\item Another important property of cyclotomics is that there roots are complex conjugates
+		of each other. To see this lets look at the 8-th cyclotomic $X^4 + 1$
+		\item $\Phi_8(x) = (x - e^{2i \pi \frac{1}{8}})(x - e^{2i \pi \frac{3}{8}})(x - e^{2i \pi \frac{5}{8}})(x - e^{2i \pi \frac{7}{8}})$
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Cyclotomic polynomial roots are complex conjugates: Example}
+	\begin{itemize}[<+->]
+		\item $x^4 + 1 = \Phi_8(x) = (x - e^{2i \pi \frac{1}{8}})(x - e^{2i \pi \frac{3}{8}})(x - e^{2i \pi \frac{5}{8}})(x - e^{2i \pi \frac{7}{8}})$
+		\item $ = (x - (\frac{\sqrt{2}}{2} + i\frac{\sqrt{2}}{2}))(x - e^{2i \pi \frac{3}{8}})(x - e^{2i \pi \frac{5}{8}})(x - (\frac{\sqrt{2}}{2} + i\frac{\sqrt{2}}{2}))$
+		\item $ = (x - (\frac{\sqrt{2}}{2} + i\frac{\sqrt{2}}{2}))(x - (-\frac{\sqrt{2}}{2} + i\frac{\sqrt{2}}{2}))(x - (-\frac{\sqrt{2}}{2} - i\frac{\sqrt{2}}{2}))(x - (\frac{\sqrt{2}}{2} + i\frac{\sqrt{2}}{2}))$
+		\item $ = (x -\frac{\sqrt{2}}{2} - i\frac{\sqrt{2}}{2})(x +\frac{\sqrt{2}}{2} - i\frac{\sqrt{2}}{2})(x +\frac{\sqrt{2}}{2} + i\frac{\sqrt{2}}{2})(x -\frac{\sqrt{2}}{2} - i\frac{\sqrt{2}}{2})$
+		\item Grouping real and imaginary parts we can see that the 1st root is the complex of the 4th 
+		and the 2nd root is the complex conjugate of the 3rd
+		\item $= ([x -\frac{\sqrt{2}}{2}] - i\frac{\sqrt{2}}{2})([x +\frac{\sqrt{2}}{2}] - i\frac{\sqrt{2}}{2})([x +\frac{\sqrt{2}}{2}] + i\frac{\sqrt{2}}{2})([x -\frac{\sqrt{2}}{2}] - i\frac{\sqrt{2}}{2})$
+		\item This fact will become important when we are discussing the mapping of polynomials with integer
+		coefficients to complex vectors
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Simplified encoding scheme}
+	\begin{itemize}[<+->]
+		\item The input messages in the CKKS scheme are vectors of complex numbers $z \in \mathbb{C}^N$
+		where $N$ is called the degree modulus for reasons that will become obvious
+		\item All homomorphic operations in the CKKS scheme are performed on polynomials in the ring
+		$\frac{\mathbb{Z}[X]}{X^N + 1}$. The homomorphic properties of these operations come as a consequence
+		of the properties of these polynomial rings
+		\item So the first big thing to understand in order to fully understand CKKS is this encoding
+		scheme. How do we get from our complex vectors to our plaintext polynomials
+		\item The ultimate is goal to be able to fully understand the map that defines CKKS encoding algorithm
+		$$\sigma^{-1} : \mathbb{C}^N \to \frac{\mathbb{Z}[X]}{X^N + 1}$$
+
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Simplified encoding scheme}
+	\begin{itemize}[<+->]
+		\item To start we will first understand the simpler map from complex vectors to polynomials with complex
+		coefficients 
+		$$\sigma^{-1} : \mathbb{C}^N \to \frac{\mathbb{C}[X]}{X^N + 1}$$
+		\item The forward map may be easier to consider
+		$$\sigma: \frac{\mathbb{C}[X]}{X^N + 1} \to \mathbb{C}^N$$
+		% \item This will probably look familiar from previous lectures as this map is really just
+		% the $n$-dimensional DFT matrix and its inverse, but lets go through the process regardless
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Simplified encoding scheme}
+	\begin{itemize}[<+->]
+		\item First lets notice a few things about the modulus $N$. The ring $\frac{\mathbb{Z}[X]}{X^N + 1}$
+		is in some way defined by a cyclotomic polynomial of degree $N$.
+		\item In CKKS they usually consider $N$ to be a power of 2, $N = 2^k$. So we need cyclotomic
+		polynomial of degree $N = 2^k$.
+		\item Since as we noted earlier the degree of the $n$-th cyclotomic is equal to $\rho(n)$
+		it is easy to find a cyclotomic of the appropriate degree as $\rho(2^{k+1}) = 2^k$, since the
+		only numbers that have a common factor with $2^k$ will be only the even numbers less than $2^k$
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Simplified encoding scheme}
+	\begin{itemize}[<+->]
+		\item Once we have our cyclotomic of degree $N$ to map a polynomial of degree $N$ to
+		a vector in $C^N$ we simply evaluate that polynomial at the $N$ roots our our cyclotomic
+		\item For a single root of unity $\omega$, and a polynomial $P(x)$ we have
+		 $$P(\omega) = a_N\omega^N + a_{N-1}\omega^{N-1} + \cdots + a_0\omega^0 = b_i$$
+		\item Our output vector $b \in C^N$ will be the vector of $b_i$s for all roots of our cyclotomic
+		which is ultimately the result of this matrix vector product for $\Phi_8(x) = X^4 + 1$
+		\item 
+		\begin{center}
+			\[
+			\begin{pmatrix}
+				1 & (e^i\pi/4)^1 &  (e^i\pi/4)^2 &  (e^i\pi/4)^3 & (e^i\pi/4)^4\\  
+				1 & (e^i\pi 3/4)^1 &  (e^i\pi 3/4)^2 &  (e^i\pi 3/4)^3 & (e^i\pi 3/4)^4\\  
+				1 & (e^i\pi 5/4)^1 &  (e^i\pi 5/4)^2 &  (e^i\pi 5/4)^3 & (e^i\pi 5/4)^4\\  
+				1 & (e^i\pi 7/4)^1 &  (e^i\pi 7/4)^2 &  (e^i\pi 7/4)^3 & (e^i\pi 7/4)^4\\  
+			\end{pmatrix} \cdot 
+			\begin{pmatrix}
+				a_0\\
+				a_1\\
+				a_2\\
+				a_3\\
+				a_4\\
+			\end{pmatrix} =
+			\begin{pmatrix}
+				b_0\\
+				b_1\\
+				b_2\\
+				b_3\\
+				b_4\\
+			\end{pmatrix}
+			\]
+		\end{center}
+	\end{itemize}
+\end{frame}
+\begin{frame}{Simplified encoding scheme}
+	\begin{itemize}[<+->]
+	\item 
+		\begin{center}
+			\[
+			\begin{pmatrix}
+				1 & (e^i\pi/4)^1 &  (e^i\pi/4)^2 &  (e^i\pi/4)^3 & (e^i\pi/4)^4\\  
+				1 & (e^i\pi 3/4)^1 &  (e^i\pi 3/4)^2 &  (e^i\pi 3/4)^3 & (e^i\pi 3/4)^4\\  
+				1 & (e^i\pi 5/4)^1 &  (e^i\pi 5/4)^2 &  (e^i\pi 5/4)^3 & (e^i\pi 5/4)^4\\  
+				1 & (e^i\pi 7/4)^1 &  (e^i\pi 7/4)^2 &  (e^i\pi 7/4)^3 & (e^i\pi 7/4)^4\\  
+			\end{pmatrix} \cdot 
+			\begin{pmatrix}
+				a_0\\
+				a_1\\
+				a_2\\
+				a_3\\
+				a_4\\
+			\end{pmatrix} =
+			\begin{pmatrix}
+				b_0\\
+				b_1\\
+				b_2\\
+				b_3\\
+				b_4\\
+			\end{pmatrix}
+			\]
+		\end{center}
+		\item Here we can see we have the coefficient vector {\bf a} that uniquely determines the polynomial
+		and the output vector {\bf b}. 
+		\item Its clear from this equation that given one we can compute the other
+		and since this is a square matrix there is one and only one solution
+		\item so it should be intuitive that this transformation defines an isomorphism between $\mathbb{C}^4$ and $\frac{\mathbb{C}[X]}{X^4 + 1}$
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Simplified encoding scheme}
+	\begin{itemize}[<+->]
+		\item At this point we have defined our simplified map and its inverse as essentially the equation we showed
+		in the previous slide
+		$$\sigma^{-1} : \mathbb{C}^N \to \frac{\mathbb{C}[X]}{X^N + 1}$$
+		\item The CKKS map/algorithm $\sigma^{-1} : \mathbb{C}^N \to \frac{\mathbb{Z}[X]}{X^N + 1}$ adds further structure
+		in order to place restrictions on this map to ensure that we encode our complex vectors as polynomials with
+		integer coefficients only
+
+
+	\end{itemize}
+\end{frame}
+
+\end{document}
