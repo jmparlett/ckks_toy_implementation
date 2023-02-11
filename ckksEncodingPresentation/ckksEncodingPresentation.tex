@@ -101,9 +101,10 @@
 \begin{frame}{Simplified encoding scheme}
 	\begin{itemize}[<+->]
 		\item The input messages in the CKKS scheme are vectors of complex numbers $z \in \mathbb{C}^N$
-		where $N$ is called the degree modulus for reasons that will become obvious
+		% where $N$ is called the degree modulus for reasons that will become obvious
 		\item All homomorphic operations in the CKKS scheme are performed on polynomials in the ring
-		$\frac{\mathbb{Z}[X]}{X^N + 1}$. The homomorphic properties of these operations come as a consequence
+		$\frac{\mathbb{Z}[X]}{X^N + 1}$
+		\item The homomorphic properties of these operations come as a consequence
 		of the properties of these polynomial rings
 		\item So the first big thing to understand in order to fully understand CKKS is this encoding
 		scheme. How do we get from our complex vectors to our plaintext polynomials
@@ -144,16 +145,16 @@
 		a vector in $\mathbb{C}^N$ we simply evaluate that polynomial at the $N$ roots our our cyclotomic
 		% \item For a single root of unity $\omega$, and a polynomial $P(x)$ we have
 		%  $$P(\omega) = a_N\omega^N + a_{N-1}\omega^{N-1} + \cdots + a_0\omega^0 = b_i$$
-		\item Our output vector $z \in \mathbb{C}^N$ will be the vector of $b_i$s for all roots of our cyclotomic
+		\item Our output vector $z \in \mathbb{C}^N$ will be the vector of $z_i$s for all roots of our cyclotomic
 		which is ultimately the result of this matrix vector product for $\Phi_8(x) = X^4 + 1$
 		\item 
 		\begin{center}
 			\[
 			\begin{pmatrix}
-				1 & (e^i\pi/4)^1 &  (e^i\pi/4)^2 &  (e^i\pi/4)^3 & (e^i\pi/4)^4\\  
-				1 & (e^i\pi 3/4)^1 &  (e^i\pi 3/4)^2 &  (e^i\pi 3/4)^3 & (e^i\pi 3/4)^4\\  
-				1 & (e^i\pi 5/4)^1 &  (e^i\pi 5/4)^2 &  (e^i\pi 5/4)^3 & (e^i\pi 5/4)^4\\  
-				1 & (e^i\pi 7/4)^1 &  (e^i\pi 7/4)^2 &  (e^i\pi 7/4)^3 & (e^i\pi 7/4)^4\\  
+				1 & (e^i\pi/4)^1 &  (e^i\pi/4)^2 &  (e^i\pi/4)^3\\  
+				1 & (e^i\pi 3/4)^1 &  (e^i\pi 3/4)^2 &  (e^i\pi 3/4)^3 \\  
+				1 & (e^i\pi 5/4)^1 &  (e^i\pi 5/4)^2 &  (e^i\pi 5/4)^3 \\  
+				1 & (e^i\pi 7/4)^1 &  (e^i\pi 7/4)^2 &  (e^i\pi 7/4)^3 \\  
 			\end{pmatrix} \cdot 
 			\begin{pmatrix}
 				a_0\\
@@ -179,10 +180,10 @@
 		\begin{center}
 			\[
 			\begin{pmatrix}
-				1 & (e^i\pi/4)^1 &  (e^i\pi/4)^2 &  (e^i\pi/4)^3 & (e^i\pi/4)^4\\  
-				1 & (e^i\pi 3/4)^1 &  (e^i\pi 3/4)^2 &  (e^i\pi 3/4)^3 & (e^i\pi 3/4)^4\\  
-				1 & (e^i\pi 5/4)^1 &  (e^i\pi 5/4)^2 &  (e^i\pi 5/4)^3 & (e^i\pi 5/4)^4\\  
-				1 & (e^i\pi 7/4)^1 &  (e^i\pi 7/4)^2 &  (e^i\pi 7/4)^3 & (e^i\pi 7/4)^4\\  
+				1 & (e^i\pi/4)^1 &  (e^i\pi/4)^2 &  (e^i\pi/4)^3 \\  
+				1 & (e^i\pi 3/4)^1 &  (e^i\pi 3/4)^2 &  (e^i\pi 3/4)^3 \\  
+				1 & (e^i\pi 5/4)^1 &  (e^i\pi 5/4)^2 &  (e^i\pi 5/4)^3 \\  
+				1 & (e^i\pi 7/4)^1 &  (e^i\pi 7/4)^2 &  (e^i\pi 7/4)^3 \\  
 			\end{pmatrix} \cdot 
 			\begin{pmatrix}
 				a_0\\
@@ -201,7 +202,7 @@
 			\]
 		\end{center}
 		\item Here we can see we have the coefficient vector {\bf a} that uniquely determines the polynomial
-		and the output vector {\bf z} $\in \mathbb{C}^N$. 
+		and the output vector {\bf z} $\in \mathbb{C}^N$
 		\item Its clear from this equation that given one we can compute the other
 		and since this is a square matrix there is one and only one solution
 		\item so it should be intuitive that this transformation defines an isomorphism between $\mathbb{C}^4$ and $\frac{\mathbb{C}[X]}{X^4 + 1}$
@@ -368,8 +369,8 @@
 		\item In the paper they do this by first projecting the input vector to the lattice basis, and then via a coordinate
 		wise random rounding algorithm fully discretize to a vector in $\sigma(\mathcal{R})$
 		\item This operation/map is denoted $\lfloor \cdot \rceil_{\sigma(\mathcal{R})}$
-		\item Then we now have a way to get $\mathbb{C}^{N/2} \to \sigma(\mathcal{R})$ via a composition of maps
-		\[ \sigma^{-1 } \circ \lfloor \pi^{-1}({\bf z}) \rceil_{\sigma(\mathcal{R})} : \mathbb{C}^{N/2} \to \sigma(\mathcal{R})\]
+		\item Then we now have a way to get $\mathbb{C}^{N/2} \to \mathcal{R}$ via a composition of maps
+		\[ \sigma^{-1 } \circ \lfloor \pi^{-1}({\bf z}) \rceil_{\sigma(\mathcal{R})} : \mathbb{C}^{N/2} \to \mathcal{R}\]
 	\end{itemize}
 \end{frame}
 
@@ -389,7 +390,7 @@
 		\item Now we can state the CKKS encoding algorithm in full
 		\item Take an element $z \in \mathbb{C}^{N/2}$
 		\item Expand it to $\pi^{-1}(z) \in \mathbb{H}$
-		\item Multiply by $\Delta$ to preserve the desired level of precision
+		\item Multiply by $\Delta$ to preserve the desired level of precision, $\Delta \cdot \pi^{-1}(z) \in \mathbb{H}$
 		\item Project to onto our ideal lattice basis via coordinate wise random rounding $\lfloor \Delta \cdot \pi^{-1}({\bf z}) \rceil_{\sigma(\mathcal{R})} \in \sigma(\mathcal{R})$
 		\item Finally encode it as a polynomial using $\sigma^{-1}$, $\sigma^{-1 } \circ \lfloor \Delta \cdot \pi^{-1}({\bf z}) \rceil_{\sigma(\mathcal{R})} \in \mathcal{R}$
 		\item The decoding procedure is just the inverse of the encoding procedure. We simply apply the inverse maps in reverse order
